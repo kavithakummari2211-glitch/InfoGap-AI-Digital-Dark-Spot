@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InfoGap AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .glow-surface { box-shadow: 0 4px 20px -2px rgba(99, 102, 241, 0.12); }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased">
+
+    <!-- 1. WELCOME SCREEN -->
+    <div id="welcome-screen" class="flex flex-col items-center justify-center min-h-screen p-4 text-center">
+        <div class="max-w-md w-full bg-slate-900 border border-slate-800 p-8 rounded-2xl glow-surface">
+            <div class="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-indigo-600/20 text-indigo-400 text-2xl font-black mb-6 border border-indigo-500/20">
+                IG
+            </div>
+            <h1 class="text-2xl font-extrabold text-white tracking-tight mb-2">Welcome to InfoGap AI</h1>
+            <p class="text-slate-400 text-xs leading-relaxed mb-8">
+                Research across sources. Find what may be missing. Verify with evidence.
+            </p>
+            <button onclick="navToWorkspace()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg tracking-wide shadow-lg shadow-indigo-600/10 active:scale-[0.99] transition">
+                Start Research
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN INTERFACE CONTEXT CONTAINER -->
+    <div id="main-workspace" class="hidden max-w-3xl mx-auto px-4 py-6">
+        <header class="flex items-center justify-between border-b border-slate-900 pb-4 mb-6">
+            <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 bg-indigo-600 rounded flex items-center justify-center text-xs font-black text-white">IG</div>
+                <h2 class="text-base font-bold text-white tracking-tight">InfoGap AI <span class="text-[10px] text-slate-500 font-mono font-normal">v1.1</span></h2>
+            </div>
+            <button onclick="navToWelcome()" class="text-[11px] text-slate-400 hover:text-slate-200 bg-slate-900 border border-slate-800 px-3 py-1 rounded">Reset</button>
+        </header>
+
+        <!-- INPUT CONFIGURATION BOARD -->
+        <div class="bg-slate-900 border border-slate-800/80 rounded-xl p-5 mb-6 shadow-sm">
+            <div class="mb-4">
+                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Research Question</label>
+                <input id="input-question" type="text" placeholder="Enter what parameter or compliance rules you want to check..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 placeholder-slate-600">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Topic Category</label>
+                <select id="input-category" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-indigo-500">
+                    <option value="General">General</option>
+                    <option value="Education">Education</option>
+                    <option value="Scholarships">Scholarships</option>
+                    <option value="Government">Government</option>
+                    <option value="Healthcare">Healthcare</option>
+                    <option value="Technology">Technology</option>
+                </select>
+            </div>
+
+            <div class="mb-5">
+                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Source URLs (Optional)</label>
+                <div id="url-input-stack" class="space-y-2">
+                    <input type="url" placeholder="https://example-source.org/data" class="individual-url-field w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2.5 text-xs text-slate-200 placeholder-slate-700">
+                </div>
+                <button onclick="appendUrlRow()" class="mt-2 text-[11px] text-indigo-400 hover:text-indigo-300 transition font-medium">+ Add Supplementary Source URL</button>
+            </div>
+
+            <button onclick="executeSourceAnalysis()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-lg text-xs font-semibold tracking-wide transition active:scale-[0.99] flex items-center justify-center gap-2">
+                <span id="trigger-label">Analyze Sources</span>
+                <div id="ui-spinner" class="hidden w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+            </button>
+            <div id="error-alert-banner" class="hidden mt-3 bg-red-950/40 border border-red-900/50 p-2.5 rounded-lg text-center text-xs text-red-400"></div>
+        </div>
+
+        <!-- 3. RESEARCH RESULTS BOARD -->
+        <div id="results-output-board" class="hidden space-y-5">
+            <!-- TRANSPARENCY PROTOTYPE WARNING BADGE -->
+            <div class="bg-amber-950/30 border border-amber-900/40 p-4 rounded-xl flex items-start gap-3">
+                <span class="text-amber-400 text-xs mt-0.5">⚠️</span>
+                <p class="text-[11px] text-amber-300/80 leading-relaxed">
+                    <strong class="text-amber-400">Automated Prototype Signal:</strong> Automated findings represent informational alerts derived from heuristic pattern scans, not guaranteed concrete truths. Cross-reference metrics manually.
+                </p>
+            </div>
+
+            <!-- SYNTHESIS SUMMARY VIEW -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+                <div class="flex items-center gap-2 mb-2.5">
+                    <span class="text-[10px] bg-indigo-900/50 text-indigo-400 font-bold px-2 py-0.5 rounded border border-indigo-800/30">AI SIGNAL</span>
+                    <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Reviewed Context Answer</h3>
+                </div>
+                <p id="summary-text-target" class="text-xs text-slate-300 leading-relaxed bg-slate-950/40 p-3 rounded-lg border border-slate-900"></p>
+            </div>
+
+            <!-- METRIC SCAN REPORT CARDS -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                    <h4 class="text-[10px] font-bold uppercase tracking-wider text-red-400 mb-2">🔴 Potential Information Gaps</h4>
+                    <div id="gap-render-zone" class="space-y-1.5"></div>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                    <h4 class="text-[10px] font-bold uppercase tracking-wider text-amber-400 mb-2">🟡 Possible Conflicts</h4>
+                    <div id="conflict-render-zone" class="space-y-1.5"></div>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                    <h4 class="text-[10px] font-bold uppercase tracking-wider text-sky-400 mb-2">🔵 Chronological / Age</h4>
+                    <div id="age-render-zone" class="space-y-1.5"></div>
+                </div>
+            </div>
+
+            <!-- STATIC COMPLIANCE CHECKLIST BANNER -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+                <div class="border-b border-slate-800 pb-2 mb-3">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400">Verification Checklist</h3>
+                    <p class="text-[10px] text-slate-500 italic mt-0.5">Extracted text is evidence to review, not an automatic guarantee of truth.</p>
+                </div>
+                <div class="space-y-2">
+                    <label class="flex items-center gap-2.5 text-xs text-slate-300"><input type="checkbox" class="accent-indigo-600 rounded"> Confirm the claim on an official source.</label>
+                    <label class="flex items-center gap-2.5 text-xs text-slate-300"><input type="checkbox" class="accent-indigo-600 rounded"> Check publication or update dates.</label>
+                    <label class="flex items-center gap-2.5 text-xs text-slate-300"><input type="checkbox" class="accent-indigo-600 rounded"> Compare details across independent sources.</label>
+                    <label class="flex items-center gap-2.5 text-xs text-slate-300"><input type="checkbox" class="accent-indigo-600 rounded"> Identify unanswered parts of the question.</label>
+                    <label class="flex items-center gap-2.5 text-xs text-slate-300"><input type="checkbox" class="accent-indigo-600 rounded"> Record evidence and source links.</label>
+                </div>
+            </div>
+
+            <!-- DYNAMIC SUGGESTED ACTION LIST -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-3">What to Verify Next (Prioritized Horizon)</h3>
+                <div id="prioritized-action-checklist" class="space-y-2"></div>
+            </div>
+
+            <!-- PHYSICAL OBJECT SOURCE EVIDENCE BLOCKS -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Extracted Source Evidence</h3>
+                <div id="evidence-blocks-dock" class="space-y-3.5"></div>
+            </div>
+
+            <!-- 4. TIMELINE FOLLOW-UP RESEARCH CHAT -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-2.5">Follow-up Research Timeline Chat</h3>
+                <div id="chat-timeline" class="h-44 overflow-y-auto bg-slate-950 border border-slate-800 rounded-lg p-3 space-y-2 text-xs mb-3">
+                    <p class="text-slate-500 italic">Session initialized. Ask contextual clarifications regarding current verified inputs below.</p>
+                </div>
+                <div class="flex gap-2">
+                    <input id="chat-message-field" type="text" placeholder="Ask specific questions supported within the source pool..." class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none">
+                    <button onclick="dispatchChatQuery()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs px-4 py-2 rounded-lg">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND_URL = "http://127.0.0.1:5000";
+        let activeSessionToken = null;
+
+        function navToWorkspace() {
+            document.getElementById("welcome-screen").classList.add("hidden");
+            document.getElementById("main-workspace").classList.remove("hidden");
+        }
+
+        function navToWelcome() {
+            document.getElementById("main-workspace").classList.add("hidden");
+            document.getElementById("welcome-screen").classList.remove("hidden");
+            document.getElementById("results-output-board").classList.add("hidden");
+            document.getElementById("input-question").value = "";
+            document.getElementById("url-input-stack").innerHTML = `
+                <input type="url" placeholder="https://example-source.org/data" class="individual-url-field w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2.5 text-xs text-slate-200 placeholder-slate-700">
+            `;
+        }
+
+        function appendUrlRow() {
+            const container = document.getElementById("url-input-stack");
+            const node = document.createElement("input");
+            node.type = "url";
+            node.placeholder = "https://example-source.org/data";
+            node.className = "individual-url-field w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2.5 text-xs text-slate-200 placeholder-slate-700";
+            container.appendChild(node);
+        }
+
+        function escapeValue(str) {
+            if (!str) return '';
+            return str.replace(/&/g, '&amp;')
+                      .replace(/</g, '&lt;')
+                      .replace(/>/g, '&gt;')
+                      .replace(/"/g, '&quot;')
+                      .replace(/'/g, '&#x27;');
+        }
+
+        async function executeSourceAnalysis() {
+            const label = document.getElementById("trigger-label");
+            const spinner = document.getElementById("ui-spinner");
+            const errBanner = document.getElementById("error-alert-banner");
+            const outputBlock = document.getElementById("results-output-board");
+
+            errBanner.classList.add("hidden");
+            spinner.classList.remove("hidden");
+            label.textContent = "Processing Content...";
+
+            const question = document.getElementById("input-question").value.trim();
+            const fieldNodes = document.querySelectorAll(".individual-url-field");
+            const targetUrls = Array.from(fieldNodes).map(n => n.value.trim()).filter(v => v !== "");
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/analyze`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ question: question, urls: targetUrls })
+                });
+
+                const dataset = await response.json();
+                if (!response.ok) throw new Error(dataset.error || "Analysis runtime exception triggered.");
+
+                activeSessionToken = dataset.sessionId;
+
+                // Bind response summary
+                document.getElementById("summary-text-target").innerText = dataset.analysis.summary;
+
+                // Render metrics columns cleanly with safe text assignment mapping
+                const zones = {
+                    gaps: document.getElementById("gap-render-zone"),
+                    conflicts: document.getElementById("conflict-render-zone"),
+                    age: document.getElementById("age-render-zone")
+                };
+
+                zones.gaps.innerHTML = "";
+                dataset.analysis.gaps.forEach(g => {
+                    const row = document.createElement("p");
+                    row.className = "text-[11px] bg-slate-950 border border-slate-900 p-2 rounded text-slate-400";
+                    row.innerText = g;
+                    zones.gaps.appendChild(row);
+                });
+
+                zones.conflicts.innerHTML = "";
+                if (dataset.analysis.conflicts.length === 0) {
+                    zones.conflicts.innerHTML = `<p class="text-[11px] text-slate-500 italic">No structural contradiction terms detected.</p>`;
+                } else {
+                    dataset.analysis.conflicts.forEach(c => {
+                        const row = document.createElement("p");
+                        row.className = "text-[11px] bg-amber-950/20 border border-amber-900/30 p-2 rounded text-amber-300/80";
+                        row.innerText = `${c.description} (sniffed expressions: '${c.word1}' vs '${c.word2}')`;
+                        zones.conflicts.appendChild(row);
+                    });
+                }
+
+                zones.age.innerHTML = "";
+                dataset.analysis.outdated.forEach(a => {
+                    const row = document.createElement("p");
+                    row.className = "text-[11px] bg-slate-950 border border-slate-900 p-2 rounded text-slate-400";
+                    row.innerText = a;
+                    zones.age.appendChild(row);
+                });
+
+                // Prioritized items checklist builders
+                const nextStepBox = document.getElementById("prioritized-action-checklist");
+                nextStepBox.innerHTML = "";
+                dataset.analysis.verification_checklist.forEach(item => {
+                    const boxRow = document.createElement("div");
+                    boxRow.className = "flex items-center gap-2 bg-slate-950 p-2.5 rounded-lg border border-slate-800 text-[11px] text-slate-300";
+                    
+                    const checkInput = document.createElement("input");
+                    checkInput.type = "checkbox";
+                    checkInput.className = "accent-indigo-600 rounded";
+                    
+                    const labelSpan = document.createElement("span");
+                    labelSpan.innerText = item;
+                    
+                    boxRow.appendChild(checkInput);
+                    boxRow.appendChild(labelSpan);
+                    nextStepBox.appendChild(boxRow);
+                });
+
+                // Evidence logs renderer
+                const evidenceBox = document.getElementById("evidence-blocks-dock");
+                evidenceBox.innerHTML = "";
+                dataset.sources.forEach(src => {
+                    const srcBlock = document.createElement("div");
+                    srcBlock.className = "bg-slate-950 p-3.5 rounded-xl border border-slate-900 text-[11px] space-y-1.5";
+                    
+                    const headerRow = document.createElement("div");
+                    headerRow.className = "flex justify-between items-center border-b border-slate-900 pb-1.5";
+                    
+                    const titleSpan = document.createElement("span");
+                    titleSpan.className = "font-bold text-indigo-400 truncate max-w-[70%]";
+                    titleSpan.innerText = `[Source ${src.id}] ${src.title}`;
+                    
+                    const dateSpan = document.createElement("span");
+                    dateSpan.className = "text-[10px] text-slate-500";
+                    dateSpan.innerText = src.date;
+                    
+                    headerRow.appendChild(titleSpan);
+                    headerRow.appendChild(dateSpan);
+                    
+                    const bodyPara = document.createElement("p");
+                    bodyPara.className = "text-slate-400 italic leading-relaxed";
+                    bodyPara.innerText = `"... ${src.content.substring(0, 400)} ..."`;
+                    
+                    const anchorLink = document.createElement("a");
+                    anchorLink.href = src.website;
+                    anchorLink.target = "_blank";
+                    anchorLink.className = "inline-block text-[10px] text-indigo-400 underline truncate max-w-full";
+                    anchorLink.innerText = src.website;
+                    
+                    srcBlock.appendChild(headerRow);
+                    srcBlock.appendChild(bodyPara);
+                    srcBlock.appendChild(anchorLink);
+                    evidenceBox.appendChild(srcBlock);
+                });
+
+                outputBlock.classList.remove("hidden");
+                // Reset chat logging display
+                document.getElementById("chat-timeline").innerHTML = `<p class="text-slate-500 italic">Session initialized. Ask contextual clarifications regarding current verified inputs above.</p>`;
+
+            } catch (err) {
+                errBanner.innerText = err.message;
+                errBanner.classList.remove("hidden");
+            } finally {
+                spinner.classList.add("hidden");
+                label.textContent = "Analyze Sources";
+            }
+        }
+
+        async function dispatchChatQuery() {
+            const inputField = document.getElementById("chat-message-field");
+            const queryText = inputField.value.trim();
+            if (!queryText || !activeSessionToken) return;
+
+            const chatTimeline = document.getElementById("chat-timeline");
+            
+            // Append client conversation track
+            const userP = document.createElement("p");
+            userP.className = "text-slate-300";
+            userP.innerHTML = `<strong class="text-indigo-400">You:</strong> ${escapeValue(queryText)}`;
+            chatTimeline.appendChild(userP);
+            inputField.value = "";
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/chat`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ sessionId: activeSessionToken, message: queryText })
+                });
+                const dataset = await response.json();
+                
+                const replyP = document.createElement("p");
+                replyP.className = "text-slate-400 bg-slate-900/40 p-1.5 rounded border border-slate-900";
+                if(response.ok) {
+                    replyP.innerHTML = `<strong class="text-emerald-400">System:</strong> ${escapeValue(dataset.reply)}`;
+                } else {
+                    replyP.innerHTML = `<strong class="text-red-400">System Error:</strong> ${escapeValue(dataset.error)}`;
+                }
+                chatTimeline.appendChild(replyP);
+                chatTimeline.scrollTop = chatTimeline.scrollHeight;
+            } catch (err) {
+                const errP = document.createElement("p");
+                errP.className = "text-red-400";
+                errP.innerHTML = `<strong>Network Error:</strong> Communication loop broken.`;
+                chatTimeline.appendChild(errP);
+            }
+        }
+    </script>
+</body>
+</html>
